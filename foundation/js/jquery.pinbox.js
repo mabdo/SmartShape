@@ -1,78 +1,45 @@
-/**
- *  jquery plugin pinbox
- *  
- *  usecase:
- *   $('#categoryProductContainer').pinbox().hide(400).fadeIn(1000);
- *   var options: {
- *                 newitemindicator : "new", //only the classname this class will remove by the plugin!
-                   subcontainer : ".prodcont"  //classname selector for all subcontainer
-                  };
- *    $('#categoryProductContainer').pinbox(options);
- *    
- *    //after an ajax call, place the new container into the container:
- *    $('#categoryProductContainer').append(ajaxResult);
- *    then call:
- *     $('#categoryProductContainer').pinbox(options);
- *     //now only the new items wich have the new class indicator: "new" will be placed directly
- *  author: Kay Schneider <kayoliver82@gmail.com>
- *  version: 1.0 
- *  date: 2012.11.19
- */
-(function( $ ){
-    
-    var methods = {
-        afterLoad : function( options  ) {
-           
-            if( $.fn.pinbox.staticInfo.isRun  == true ) {
+(function ($) {
+    var container, matrix, methods = {
+        afterLoad : function (options) {
+            if ($.fn.pinbox.staticInfo.isRun === true) {
                 return 1;
             }
             $.fn.pinbox.staticInfo.isRun = true;
             container = $(options.subcontainer + "." + options.newitemindicator, $(this));
-
-            var matrix  =  methods['buildMatrix'].apply( this, [container, options]);
-            methods.setPositions.apply(this, [ matrix , options ]);
-       
+            matrix = methods.buildMatrix.apply(this, [container, options]);
+            methods.setPositions.apply(this, [matrix, options]);
             return container;
         },
-        
         buildMatrix: function (containerArrs, options) {
-
-            var matrix = new Array();
-            var subMatrix = new Array();
-            var matrixWidth = options.rowsize;
-            console.log(options.rowsize);
-            var counter = 0;
+            methods.reset();
+            var matrix = [], subMatrix = [], matrixWidth = options.rowsize, counter = 0;
             $(containerArrs).each(function () {
-                counter++;
+                counter += 1;
                 var pushObject = this;
                 subMatrix.push(pushObject);
 
-                if(counter === matrixWidth) {
+                if (counter === matrixWidth) {
                     counter = 0;
                     matrix.push(subMatrix);
-                    subMatrix = new Array();
+                    subMatrix = [];
                 }
        
             });
-            if(subMatrix.length > 0) {
+            if (subMatrix.length > 0) {
                 matrix.push(subMatrix);
             }
-            
             return matrix;
         },
-        
         setPositions : function (matrix, options) {
             var CFlexObj = this;
             var staticInfo = $.fn.pinbox.staticInfo;
             var tools = methods;
-            console.log(matrix);
             $(matrix).each(function (pos) {
                 $(this).each(function (subPos) {
-                    if(pos > 0) {
+                    if (pos > 0) {
                         if(staticInfo.nextFillMatrixId !== false ) {
                             subPos = staticInfo.nextFillMatrixId;
                         }
-                        
                         var parent = pos -1;
                         var parentSubPos = subPos;
                         var parentObject = tools.getParentItem(subPos);
@@ -80,35 +47,53 @@
                             parentObject.top,
                             $(parentObject.height).outerHeight(true)
                             );
-                        
-                        left = ( subPos * $(this).outerWidth(true) ) + 10;
-                        
+                        if(options.rtl !== false){
+                            right = ( subPos * $(this).outerWidth(true) ) + 10;
+                            $(this).css({
+                                'position' : 'absolute',
+                                'top': topPos + 'px', 
+                                'left' : 'auto',
+                                'right':right + 'px'
+                            });
+                        }else{
+                            left = ( subPos * $(this).outerWidth(true) ) + 10;
+                            $(this).css({
+                                'position':'absolute',
+                                'top': topPos + 'px', 
+                                'right' : 'auto',
+                                'left':left + 'px'
+                            });
+                        }
                         $(this).attr('subpos',subPos );
-                        $(this).css( {
-                            'position':'absolute',
-                            'top': topPos + 'px', 
-                            'left':left + 'px'
-                        });
-                
                         $(this).removeClass(options.newitemindicator);
-                 
                     } else {
+                        
                         if(staticInfo.nextFillMatrixId != false) {
                             subPos = staticInfo.nextFillMatrixId;
+                            
                         }
                         if( tools.getLastPosition(subPos) != false ) {
                             topPos = tools.getLastPosition(subPos);
                         } else {
                             topPos = 0;
                         }
-                
-                        left = ( subPos * $(this).outerWidth(true) ) + 10;
-             
-                        $(this).css( {
-                            'position':'absolute',
-                            'top':topPos + 'px', 
-                            'left':left + 'px'
-                        });
+                        if(options.rtl !== false){
+                            right = (subPos * $(this).outerWidth(true)) + 10;
+                            $(this).css({
+                                'position':'absolute',
+                                'top':topPos + 'px', 
+                                'left' : 'auto',
+                                'right':right + 'px'
+                            });
+                        } else {
+                            left = (subPos * $(this).outerWidth(true)) + 10;
+                            $(this).css({
+                                'position':'absolute',
+                                'top':topPos + 'px', 
+                                'right' : 'auto',
+                                'left':left + 'px'
+                            });
+                        }
                         $(this).removeClass(options.newitemindicator);
                     }
                     
@@ -118,11 +103,9 @@
                     if(staticInfo.firstRun != true) {
                         tools.checkV();
                     }
-                
                 });
                 
                 staticInfo.firstRun = false;
-         
             });
 
             staticInfo.isRun = false; 
@@ -151,8 +134,6 @@
             } else {
                 $.fn.pinbox.staticInfo.nextFillMatrixId = false;
             }
-            
-  
         },
 
         maxItem : function(ar) {
@@ -191,24 +172,22 @@
         setLastPosition : function (index,position) {
 
             if($.fn.pinbox.staticInfo.lastScrollIndex == false) {
-                $.fn.pinbox.staticInfo.lastScrollIndex = new Array();
+                $.fn.pinbox.staticInfo.lastScrollIndex = [];
             }
     
             $.fn.pinbox.staticInfo.lastScrollIndex[index] = position;
         },
-
+        reset : function(){
+            $.fn.pinbox.staticInfo.lastScrollIndex = [];
+            $.fn.pinbox.staticInfo.parentPosition = [];
+        },
         builPosPositionFromMaxParent : function (top, height) {
             return top + height + 30;
         },
-        
         destroy : function( ) {
-
             return this.each(function(){
-
                 var $this = $(this),
                 data = $this.data('tooltip');
-
-                // Namespacing FTW
                 $(window).unbind('.tooltip');
                 data.tooltip.remove();
                 $this.removeData('tooltip');
@@ -218,21 +197,17 @@
         }
    
     };
-    
-    
-
     $.fn.pinbox = function (options) {
         var opts = jQuery.extend({}, $.fn.pinbox.defaults, options);
 
         return methods.afterLoad.apply(this, [ opts ]);
     };
-
     $.fn.pinbox.staticInfo = {
         isRun : false,
         lastScrollIndex : false,
         containerMaxDiff : 500,
         nextFillMatrixId : false,
-        parentPosition :new Array(),
+        parentPosition :[],
         firstRun :true
     };
     
@@ -241,7 +216,8 @@
     $.fn.pinbox.defaults =  {
         newitemindicator : "new",
         subcontainer : ".prodcont",
-        rowsize : 5
+        rowsize : 5,
+        rtl : false,
     };
 })( jQuery );
 
